@@ -12,6 +12,7 @@ func SetupRouter() *gin.Engine {
 	grp1 := r.Group("/go-back")
 	{
 		grp1.POST("callupload", _Controllers.CallAPIUploadFile)
+		grp1.GET("getfile/:fileId", _Controllers.GetFile) //Get somethings
 	}
 
 	return r
