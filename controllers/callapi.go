@@ -150,3 +150,69 @@ func GetFile(c *gin.Context) {
 	}
 
 }
+
+func UploadBuffer(c *gin.Context) {
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	docTypeId := "0"
+	groupId := "0"
+
+	url := "http://localhost:8080/upload-api/uploadFile/" + docTypeId + "/" + groupId
+
+	entries, err := os.ReadDir("./Buffer")
+	if err != nil || len(entries) == 0 {
+		c.JSON(http.StatusInternalServerError, "Error to Read Dir Entry file")
+		return
+	}
+	if len(entries) != 1 {
+		c.JSON(http.StatusInternalServerError, "Error to Entry file > 1 file")
+		return
+	}
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	file, err := os.Open("./Buffer/" + entries[0].Name())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, "Error to open entry file")
+		return
+	}
+	defer file.Close()
+
+	if file != nil {
+		var src io.Reader = file
+
+		fw, err := writer.CreateFormFile("file", file.Name())
+		if err != nil {
+			c.JSON(http.StatusOK, "Error to write mutipart request")
+			return
+		}
+		_, err = io.Copy(fw, src)
+		if err != nil {
+			c.JSON(http.StatusOK, "Error to copy src file to request")
+			return
+		}
+	}
+	// Close multipart writer.
+	writer.Close()
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body.Bytes()))
+	if err != nil {
+		c.JSON(http.StatusOK, "Error to create new request")
+		return
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rsp, err := client.Do(req)
+	if err != nil {
+		c.JSON(rsp.StatusCode, "Error when client try to do request")
+		return
+	}
+	defer rsp.Body.Close()
+
+	finalRes := new(_Domain.ResponseUploadFile)
+
+	json.NewDecoder(rsp.Body).Decode(finalRes)
+
+	c.JSON(rsp.StatusCode, finalRes)
+}

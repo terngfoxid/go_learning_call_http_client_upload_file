@@ -13,6 +13,8 @@ func SetupRouter() *gin.Engine {
 	{
 		grp1.POST("callupload", _Controllers.CallAPIUploadFile)
 		grp1.GET("getfile/:fileId", _Controllers.GetFile) //Get somethings
+
+		grp1.POST("uploadbuffer", _Controllers.UploadBuffer) //test read local file
 	}
 
 	return r
